@@ -954,3 +954,68 @@ input:checked + .slider:before {
   width: auto;
   padding: 8px 16px;
 }
+
+/* Delete Custom Category Button styling */
+.filter-right-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-category-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.category-filter-item:hover .delete-category-btn {
+  opacity: 1;
+}
+
+.delete-category-btn:hover {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.category-filter-item.active .delete-category-btn {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.category-filter-item.active .delete-category-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.delete-cat-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+/* Folder Card Delete button styling */
+.delete-folder-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+.delete-folder-btn:hover {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.1);
+}

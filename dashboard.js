@@ -218,17 +218,66 @@ document.addEventListener('DOMContentLoaded', async () => {
         <svg class="filter-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
       `;
 
+      const isCustom = settings && settings.customCategories && settings.customCategories.includes(cat);
+      let deleteBtnHtml = '';
+      if (isCustom) {
+        deleteBtnHtml = `
+          <button class="delete-category-btn" title="Delete custom category">
+            <svg class="delete-cat-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        `;
+      }
+
       item.innerHTML = `
         <div class="filter-name-wrapper">
           ${folderIcon}
           <span>${cat}</span>
         </div>
-        <span class="filter-count">${count}</span>
+        <div class="filter-right-wrapper">
+          <span class="filter-count">${count}</span>
+          ${deleteBtnHtml}
+        </div>
       `;
+
       item.addEventListener('click', () => {
         activeCategoryFilter = cat;
         renderDashboard();
       });
+
+      if (isCustom) {
+        const delBtn = item.querySelector('.delete-category-btn');
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showModal(
+              "Delete Category?",
+              `Are you sure you want to delete the category "${cat}"? Deleting this category will also permanently delete all ${count} links saved inside it. This action cannot be undone.`,
+              async () => {
+                try {
+                  // Remove category from settings
+                  settings.customCategories = (settings.customCategories || []).filter(c => c !== cat);
+                  await saveSettings(settings);
+                  
+                  // Remove links in this category
+                  const updatedLinks = links.filter(l => l.category !== cat);
+                  await saveLinks(updatedLinks);
+                  
+                  if (activeCategoryFilter === cat) {
+                    activeCategoryFilter = null;
+                  }
+                  
+                  showToast(`Category "${cat}" and its links deleted.`);
+                  await loadData();
+                  renderDashboard();
+                } catch (err) {
+                  console.error("LNKAI: Failed to delete custom category:", err);
+                }
+              }
+            );
+          });
+        }
+      }
+
       categoryFilterList.appendChild(item);
     });
 
@@ -322,6 +371,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const isCollapsed = collapsedFolders[cat] === true;
 
+      const isCustom = settings && settings.customCategories && settings.customCategories.includes(cat);
+      let deleteFolderBtnHtml = '';
+      if (isCustom) {
+        deleteFolderBtnHtml = `
+          <button class="delete-folder-btn" title="Delete custom category and all its links">
+            <svg class="delete-cat-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        `;
+      }
+
       // Construct Folder Card
       const folderCard = document.createElement('div');
       folderCard.className = `folder-card ${isCollapsed ? 'collapsed' : ''}`;
@@ -335,6 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="folder-count-badge">${categoryLinks.length}</span>
           </div>
           <div class="folder-actions">
+            ${deleteFolderBtnHtml}
             <svg class="arrow-toggle-icon" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </div>
         </div>
@@ -342,6 +402,40 @@ document.addEventListener('DOMContentLoaded', async () => {
           <!-- Nested Links go here -->
         </div>
       `;
+
+      if (isCustom) {
+        const delFolderBtn = folderCard.querySelector('.delete-folder-btn');
+        if (delFolderBtn) {
+          delFolderBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Avoid folding toggle
+            showModal(
+              "Delete Category?",
+              `Are you sure you want to delete the category "${cat}"? Deleting this category will also permanently delete all ${categoryLinks.length} links saved inside it. This action cannot be undone.`,
+              async () => {
+                try {
+                  // Remove category from settings
+                  settings.customCategories = (settings.customCategories || []).filter(c => c !== cat);
+                  await saveSettings(settings);
+                  
+                  // Remove links in this category
+                  const updatedLinks = links.filter(l => l.category !== cat);
+                  await saveLinks(updatedLinks);
+                  
+                  if (activeCategoryFilter === cat) {
+                    activeCategoryFilter = null;
+                  }
+                  
+                  showToast(`Category "${cat}" and its links deleted.`);
+                  await loadData();
+                  renderDashboard();
+                } catch (err) {
+                  console.error("LNKAI: Failed to delete custom category folder:", err);
+                }
+              }
+            );
+          });
+        }
+      }
 
       // Collapse Toggle Click
       folderCard.querySelector('.folder-header').addEventListener('click', () => {

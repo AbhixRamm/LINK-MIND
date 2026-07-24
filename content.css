@@ -2,14 +2,12 @@
 
 #slo-fab-container.slo-reset {
   position: fixed !important;
-  bottom: 30px !important;
+  bottom: 80px !important; /* Moved up to allow the dashboard button to expand downwards */
   right: 30px !important;
+  width: 50px !important;
+  height: 50px !important;
   z-index: 2147483647 !important; /* Ensure it is on top of everything */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  display: flex !important;
-  flex-direction: column-reverse !important;
-  align-items: center !important;
-  gap: 15px !important;
   user-select: none !important;
   opacity: 0.5 !important; /* Semi-transparent by default */
   transition: opacity 0.3s ease !important; /* Smooth fade in/out */
@@ -63,50 +61,54 @@
 
 /* Sub-buttons styling */
 .slo-sub-btn {
+  position: absolute !important;
+  width: 45px !important;
+  height: 45px !important;
   background: rgba(30, 30, 40, 0.85) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   color: #e2e8f0 !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  opacity: 0 !important;
-  transform: translateY(20px) scale(0.8) !important;
-  pointer-events: none !important;
-  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s !important;
+  transition: background 0.2s, color 0.2s, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  pointer-events: none !important; /* Disabled when collapsed */
 }
 
-#slo-fab-container.slo-reset:hover .slo-sub-btn {
-  opacity: 1 !important;
-  transform: translateY(0) scale(1) !important;
-  pointer-events: auto !important;
+#slo-fab-container.slo-expanded .slo-sub-btn {
+  pointer-events: auto !important; /* Enabled when expanded */
 }
 
-/* Cascade delays for sub-buttons opening animation */
-#slo-fab-container.slo-reset:hover .slo-sub-btn:nth-child(1) { transition-delay: 0.05s !important; }
-#slo-fab-container.slo-reset:hover .slo-sub-btn:nth-child(2) { transition-delay: 0.1s !important; }
-#slo-fab-container.slo-reset:hover .slo-sub-btn:nth-child(3) { transition-delay: 0.15s !important; }
-
-/* Force collapse when dragging */
-#slo-fab-container.slo-dragging .slo-sub-btn {
-  opacity: 0 !important;
-  transform: translateY(20px) scale(0.8) !important;
-  pointer-events: none !important;
+#slo-fab-save {
+  top: -58px !important;
+  left: 2.5px !important;
 }
-#slo-fab-container.slo-dragging .slo-sub-btn:nth-child(1) { transition-delay: 0s !important; }
-#slo-fab-container.slo-dragging .slo-sub-btn:nth-child(2) { transition-delay: 0s !important; }
-#slo-fab-container.slo-dragging .slo-sub-btn:nth-child(3) { transition-delay: 0s !important; }
+
+#slo-fab-category {
+  top: 2.5px !important;
+  left: -58px !important;
+}
+
+#slo-fab-dashboard {
+  top: 63px !important;
+  left: 2.5px !important;
+}
 
 .slo-sub-btn:hover {
   background: rgba(229, 43, 43, 0.9) !important;
   color: #ffffff !important;
-  transform: scale(1.1) !important;
+  transform: scale(1.15) !important;
 }
 
 /* Icon vectors */
 .slo-icon {
-  width: 22px !important;
-  height: 22px !important;
+  width: 18px !important;
+  height: 18px !important;
   fill: currentColor !important;
   transition: transform 0.2s !important;
+}
+
+.slo-main-btn .slo-icon {
+  width: 22px !important;
+  height: 22px !important;
 }
 
 #slo-fab-save.slo-active {
@@ -116,24 +118,161 @@
   background: rgba(16, 185, 129, 0.2) !important;
 }
 
-#slo-fab-delete {
-  color: #ef4444 !important; /* Red */
+#slo-fab-menu {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important; /* Clicks fall through to main button */
+  opacity: 0 !important;
+  transform: translateY(10px) scale(0.95) !important;
+  transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important; /* Snappy 0.15s */
 }
-#slo-fab-delete:hover {
-  background: rgba(239, 68, 68, 0.9) !important;
+
+#slo-fab-container.slo-expanded #slo-fab-menu {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+/* Force collapse when dragging */
+#slo-fab-container.slo-dragging #slo-fab-menu {
+  opacity: 0 !important;
+  transform: translateY(10px) scale(0.95) !important;
+}
+
+#slo-fab-category.slo-active {
+  color: #a855f7 !important; /* Premium Purple/Violet */
+}
+
+#slo-fab-category.slo-active:hover {
+  background: rgba(168, 85, 247, 0.2) !important;
+}
+
+/* Category Dropdown styling */
+#slo-category-dropdown {
+  position: absolute !important;
+  right: 110px !important; /* Positioned left of the category button (which is at -58px) */
+  bottom: -45px !important; /* Center/align with category button height */
+  background: rgba(15, 15, 20, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  
+  /* Fixed width, a bit bigger so text is not near edges */
+  width: 220px !important;
+  
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  z-index: 2147483647 !important;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  transform-origin: bottom right !important;
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  pointer-events: auto !important;
+}
+
+#slo-category-dropdown.slo-dropdown-hidden {
+  opacity: 0 !important;
+  transform: scale(0.8) translate(10px, 10px) !important;
+  pointer-events: none !important;
+}
+
+#slo-fab-container.slo-reset .slo-dropdown-header {
+  padding: 12px 18px !important; /* Plenty of horizontal breathing room */
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  white-space: nowrap !important;
+}
+
+#slo-dropdown-list {
+  overflow-y: auto !important;
+  max-height: 110px !important; /* Fits exactly 3 items + padding */
+  padding: 6px 0 !important;
+}
+
+/* Custom Scrollbar for Dropdown List */
+#slo-dropdown-list::-webkit-scrollbar {
+  width: 6px !important;
+}
+#slo-dropdown-list::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+#slo-dropdown-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 3px !important;
+}
+#slo-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+#slo-fab-container.slo-reset .slo-category-item {
+  width: 100% !important;
+  padding: 10px 18px !important; /* 18px horizontal padding for spacing */
+  font-size: 13px !important;
+  color: #e2e8f0 !important;
+  background: transparent !important;
+  border: none !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 15px !important;
+  transition: background 0.2s, color 0.2s !important;
+  white-space: normal !important;
+  word-break: break-all !important;
+}
+
+#slo-fab-container.slo-reset .slo-category-item:hover {
+  background: rgba(229, 43, 43, 0.9) !important;
   color: #ffffff !important;
+}
+
+#slo-fab-container.slo-reset .slo-category-item.slo-item-active {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10b981 !important;
+  font-weight: 600 !important;
+}
+
+#slo-fab-container.slo-reset .slo-category-item.slo-item-active::after {
+  content: "✓" !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+}
+
+#slo-fab-container.slo-reset .slo-no-categories {
+  padding: 16px 18px !important; /* Matched horizontal padding */
+  font-size: 12px !important;
+  color: #94a3b8 !important;
+  text-align: center !important;
+  line-height: 1.6 !important;
+}
+
+#slo-fab-container.slo-reset .slo-no-categories a {
+  color: #ef4444 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
 }
 
 /* Tooltip on hover */
 .slo-fab-btn[title]::after {
   content: attr(title) !important;
   position: absolute !important;
-  right: 60px !important;
+  right: 40px !important; /* Adjusted for smaller buttons */
   background: rgba(15, 23, 42, 0.9) !important;
   color: #ffffff !important;
   padding: 5px 10px !important;
   border-radius: 6px !important;
-  font-size: 12px !important;
+  font-size: 11px !important;
   white-space: nowrap !important;
   opacity: 0 !important;
   pointer-events: none !important;
@@ -146,6 +285,97 @@
 .slo-fab-btn[title]:hover::after {
   opacity: 1 !important;
   transform: translateX(0) !important;
+}
+
+/* Hide category button tooltip when dropdown menu is active to prevent ugly text overlap */
+#slo-fab-container:has(#slo-category-dropdown:not(.slo-dropdown-hidden)) #slo-fab-category[title]::after {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Dropdown Footer & Inline Category creation form styling */
+#slo-dropdown-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(20, 20, 25, 0.5) !important;
+}
+
+#slo-fab-container.slo-reset .slo-create-new-btn {
+  width: 100% !important;
+  padding: 10px 18px !important; /* Match item horizontal padding */
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #a855f7 !important; /* Premium Purple */
+  background: transparent !important;
+  border: none !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  transition: background 0.2s, color 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+#slo-fab-container.slo-reset .slo-create-new-btn:hover {
+  background: rgba(168, 85, 247, 0.1) !important;
+  color: #c084fc !important;
+}
+
+#slo-fab-container.slo-reset .slo-new-cat-container {
+  padding: 12px 18px !important; /* Match item padding */
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+#slo-fab-container.slo-reset #slo-new-cat-field {
+  width: 100% !important;
+  padding: 6px 10px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+#slo-fab-container.slo-reset #slo-new-cat-field:focus {
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 5px rgba(168, 85, 247, 0.5) !important;
+}
+
+#slo-fab-container.slo-reset .slo-new-cat-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+}
+
+#slo-fab-container.slo-reset .slo-new-cat-actions button {
+  padding: 4px 10px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+}
+
+#slo-fab-container.slo-reset #slo-new-cat-save {
+  background: #a855f7 !important;
+  color: #ffffff !important;
+}
+
+#slo-fab-container.slo-reset #slo-new-cat-save:hover {
+  background: #9333ea !important;
+}
+
+#slo-fab-container.slo-reset #slo-new-cat-cancel {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+
+#slo-fab-container.slo-reset #slo-new-cat-cancel:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 
 

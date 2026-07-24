@@ -108,9 +108,14 @@
         <button id="slo-fab-dashboard" class="slo-fab-btn slo-sub-btn" title="Open Dashboard">
           ${ICONS.dashboard}
         </button>
-        <button id="slo-fab-delete" class="slo-fab-btn slo-sub-btn" title="Remove page">
-          ${ICONS.delete}
+        <button id="slo-fab-category" class="slo-fab-btn slo-sub-btn" title="Save to Category">
+          ${ICONS.category}
         </button>
+      </div>
+      <div id="slo-category-dropdown" class="slo-dropdown-hidden">
+        <div class="slo-dropdown-header">Save to Category</div>
+        <div id="slo-dropdown-list"></div>
+        <div id="slo-dropdown-footer"></div>
       </div>
     `;
 
@@ -144,20 +149,32 @@
   // Update FAB styles based on link saved state
   function updateUIState() {
     const saveBtn = document.getElementById('slo-fab-save');
-    const deleteBtn = document.getElementById('slo-fab-delete');
+    const categoryBtn = document.getElementById('slo-fab-category');
 
-    if (!saveBtn || !deleteBtn) return;
+    if (!saveBtn || !categoryBtn) return;
 
     if (currentLinkState) {
       mainBtn.classList.add('slo-active');
       saveBtn.classList.add('slo-active');
       saveBtn.title = "Saved (Click to remove)";
-      deleteBtn.style.display = 'flex';
+      
+      // Check if saved in one of the custom categories, if so highlight the category button
+      getSettings().then(settings => {
+        const customCats = settings.customCategories || [];
+        if (customCats.includes(currentLinkState.category)) {
+          categoryBtn.classList.add('slo-active');
+          categoryBtn.title = `Saved in: ${currentLinkState.category}`;
+        } else {
+          categoryBtn.classList.remove('slo-active');
+          categoryBtn.title = "Save to Category";
+        }
+      });
     } else {
       mainBtn.classList.remove('slo-active');
       saveBtn.classList.remove('slo-active');
       saveBtn.title = "Bookmark page";
-      deleteBtn.style.display = 'none';
+      categoryBtn.classList.remove('slo-active');
+      categoryBtn.title = "Save to Category";
     }
   }
 
@@ -194,6 +211,7 @@
     
     mainBtn.style.cursor = 'move';
     container.classList.add('slo-dragging');
+    container.classList.remove('slo-expanded'); // Ensure menu collapses during drag
   }
 
   function dragMove(e) {
@@ -210,12 +228,12 @@
       const newRight = buttonStartX + deltaX;
       const newBottom = buttonStartY + deltaY;
 
-      // Limit positions within the viewport
-      const maxRight = window.innerWidth - 60;
-      const maxBottom = window.innerHeight - 60;
+      // Limit positions within the viewport to keep flyout buttons on-screen but allow closer edge movement
+      const maxRight = window.innerWidth - 55;
+      const maxBottom = window.innerHeight - 55;
 
       container.style.setProperty('right', `${Math.max(10, Math.min(newRight, maxRight))}px`, 'important');
-      container.style.setProperty('bottom', `${Math.max(10, Math.min(newBottom, maxBottom))}px`, 'important');
+      container.style.setProperty('bottom', `${Math.max(50, Math.min(newBottom, maxBottom))}px`, 'important');
     }
   }
 
@@ -239,7 +257,8 @@
     dragStartY = undefined;
   }
 
-  // Setup click handlers
+  // Setup click and hover handlers
+  let hoverTimeout = null;
   function setupEventHandlers() {
     // Save Action
     const saveBtn = document.getElementById('slo-fab-save');
@@ -261,10 +280,50 @@
       });
     }
 
-    // Delete Action
-    const deleteBtn = document.getElementById('slo-fab-delete');
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', deleteLink);
+    // Category Selector Action
+    const categoryBtn = document.getElementById('slo-fab-category');
+    const dropdown = document.getElementById('slo-category-dropdown');
+    if (categoryBtn && dropdown) {
+      categoryBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        
+        // If dropdown is currently hidden, populate it and show it
+        if (dropdown.classList.contains('slo-dropdown-hidden')) {
+          await populateCategoriesDropdown();
+          dropdown.classList.remove('slo-dropdown-hidden');
+        } else {
+          dropdown.classList.add('slo-dropdown-hidden');
+        }
+      });
+    }
+
+    // Dismiss dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('slo-category-dropdown');
+      const container = document.getElementById('slo-fab-container');
+      if (dropdown && container && !container.contains(e.target)) {
+        dropdown.classList.add('slo-dropdown-hidden');
+      }
+    });
+
+    // Hover state management with buffer delay to avoid lag / accidental collapse
+    if (container) {
+      container.addEventListener('mouseenter', () => {
+        if (hoverTimeout) {
+          clearTimeout(hoverTimeout);
+          hoverTimeout = null;
+        }
+        container.classList.add('slo-expanded');
+      });
+
+      container.addEventListener('mouseleave', () => {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+          container.classList.remove('slo-expanded');
+          const dropdown = document.getElementById('slo-category-dropdown');
+          if (dropdown) dropdown.classList.add('slo-dropdown-hidden');
+        }, 150); // 150ms buffer to cross empty gaps smoothly and collapse quickly
+      });
     }
   }
 
@@ -309,19 +368,157 @@
     }
   }
 
-  // Action: Delete/Remove Link
-  async function deleteLink() {
+  // Populate Categories list inside the dropdown
+  async function populateCategoriesDropdown() {
+    const listEl = document.getElementById('slo-dropdown-list');
+    const footerEl = document.getElementById('slo-dropdown-footer');
+    if (!listEl || !footerEl) return;
+    
+    listEl.innerHTML = '';
+    footerEl.innerHTML = '';
+    
     try {
-      if (!currentLinkState) return;
+      const settings = await getSettings();
+      const customCats = settings.customCategories || [];
+      
+      // Render "+ Create new..." button in the dropdown footer
+      footerEl.innerHTML = `
+        <button class="slo-create-new-btn">+ Create new...</button>
+      `;
+      footerEl.querySelector('.slo-create-new-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        showCreateNewCategoryUI();
+      });
+
+      if (customCats.length === 0) {
+        listEl.innerHTML = `
+          <div class="slo-no-categories">
+            No custom categories yet. Click below to create one.
+          </div>
+        `;
+        return;
+      }
+      
+      customCats.forEach(cat => {
+        const item = document.createElement('button');
+        item.className = 'slo-category-item';
+        item.textContent = cat;
+        
+        // Highlight if this is the active category for the current bookmarked link
+        if (currentLinkState && currentLinkState.category === cat) {
+          item.classList.add('slo-item-active');
+        }
+        
+        item.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await saveToCategory(cat);
+          const dropdown = document.getElementById('slo-category-dropdown');
+          if (dropdown) dropdown.classList.add('slo-dropdown-hidden');
+        });
+        
+        listEl.appendChild(item);
+      });
+    } catch (e) {
+      console.warn("LNKAI: Failed to populate custom categories:", e);
+      listEl.innerHTML = '<div class="slo-no-categories">Error loading categories</div>';
+    }
+  }
+
+  // Display the inline text input for creating a new custom category
+  function showCreateNewCategoryUI() {
+    const listEl = document.getElementById('slo-dropdown-list');
+    const footerEl = document.getElementById('slo-dropdown-footer');
+    if (!listEl || !footerEl) return;
+    
+    footerEl.innerHTML = ''; // Hide the create button while creating
+    
+    listEl.innerHTML = `
+      <div class="slo-new-cat-container">
+        <input type="text" id="slo-new-cat-field" placeholder="Category name..." autocomplete="off" />
+        <div class="slo-new-cat-actions">
+          <button id="slo-new-cat-cancel">Cancel</button>
+          <button id="slo-new-cat-save">Create</button>
+        </div>
+      </div>
+    `;
+
+    setTimeout(() => {
+      const input = document.getElementById('slo-new-cat-field');
+      if (input) input.focus();
+    }, 50);
+
+    const handleCancel = (e) => {
+      e.stopPropagation();
+      populateCategoriesDropdown();
+    };
+
+    const handleSave = async (e) => {
+      e.stopPropagation();
+      const input = document.getElementById('slo-new-cat-field');
+      if (!input) return;
+      
+      const value = input.value.trim();
+      if (!value) return;
+
+      try {
+        const settings = await getSettings();
+        settings.customCategories = settings.customCategories || [];
+        
+        if (!settings.customCategories.includes(value)) {
+          settings.customCategories.push(value);
+          await saveSettings(settings);
+        }
+
+        await saveToCategory(value);
+        const dropdown = document.getElementById('slo-category-dropdown');
+        if (dropdown) dropdown.classList.add('slo-dropdown-hidden');
+      } catch (err) {
+        console.warn("LNKAI: Failed to create new custom category:", err);
+      }
+    };
+
+    document.getElementById('slo-new-cat-cancel').addEventListener('click', handleCancel);
+    document.getElementById('slo-new-cat-save').addEventListener('click', handleSave);
+    document.getElementById('slo-new-cat-field').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        handleSave(e);
+      } else if (e.key === 'Escape') {
+        handleCancel(e);
+      }
+    });
+  }
+
+  // Save the page directly to a selected category
+  async function saveToCategory(categoryName) {
+    try {
       const links = await getLinks();
       const currentNormUrl = normalizeUrl(window.location.href);
-      const updatedLinks = links.filter(l => normalizeUrl(l.url) !== currentNormUrl);
-      await saveLinks(updatedLinks);
-      currentLinkState = null;
-      showToast("Link removed");
+      const existingLinkIndex = links.findIndex(l => normalizeUrl(l.url) === currentNormUrl);
+      
+      if (existingLinkIndex !== -1) {
+        // Link already saved, just update the category
+        links[existingLinkIndex].category = categoryName;
+        await saveLinks(links);
+        currentLinkState = links[existingLinkIndex];
+        showToast(`Saved to ${categoryName}!`);
+      } else {
+        // Create new link saved to this category
+        const newLink = {
+          id: Date.now().toString(),
+          url: currentNormUrl,
+          title: document.title || 'Untitled Link',
+          category: categoryName,
+          starred: false,
+          addedAt: Date.now()
+        };
+        links.push(newLink);
+        await saveLinks(links);
+        currentLinkState = newLink;
+        showToast(`Saved to ${categoryName}!`);
+      }
       updateUIState();
     } catch (e) {
-      console.warn("LNKAI: Failed to delete link:", e);
+      console.warn("LNKAI: Failed to save to category:", e);
     }
   }
 })();

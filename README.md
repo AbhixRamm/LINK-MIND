@@ -1,11 +1,11 @@
-# LINK MIND — Smart Link Organizer Chrome Extension
+# LNK AI — Smart Link Organizer Chrome Extension
 
-**LINK MIND** is a premium, modern, and privacy-focused Chrome Extension designed to help you save, organize, and auto-categorize your web links locally. Using Google Gemini 3.5 Flash, the extension intelligently auto-classifies saved pages based on their titles and URLs. It features an interactive, page-injected floating action button (FAB), a lightweight action popup, and a comprehensive analytics-driven dashboard.
+**LNK AI** is a premium, modern, and privacy-focused Chrome Extension designed to help you save, organize, and auto-categorize your web links locally. Using Google Gemini 3.5 Flash, the extension intelligently auto-classifies saved pages based on their titles and URLs. It features an interactive, page-injected floating action button (FAB), a lightweight action popup, and a comprehensive analytics-driven dashboard.
 
 ---
 
 ## 🎨 Design System: Classy Obsidian & Ruby Red
-LINK MIND features a bespoke, premium dark UI designed to be high-contrast yet elegant:
+LNK AI features a bespoke, premium dark UI designed to be high-contrast yet elegant:
 * **Backgrounds**: Obsidian Black (`#08080a`) and matte charcoal (`#0f0f12`, `#141418`).
 * **Highlights & Accents**: Rich ruby red gradient (`#e52b2b` to `#990000`) and glowing drop-shadows.
 * **Secondary Elements**: Soft metallic silvers (`#f3f4f6`) and light zinc/gray (`#a1a1aa`) for a clean, premium visual aesthetic.
@@ -67,7 +67,7 @@ LINK MIND features a bespoke, premium dark UI designed to be high-contrast yet e
 4. Select the folder containing these project files.
 
 ### 2. Configure Gemini Auto-Categorization (Optional)
-1. Go to the **LINK MIND Dashboard** (accessible by clicking the dashboard button inside the popup).
+1. Go to the **LNK AI Dashboard** (accessible by clicking the dashboard button inside the popup).
 2. Locate the **AI Auto-Categorization** section in the sidebar.
 3. Input your **Google Gemini API Key** and click save (represented by the checkmark `✓` icon).
 4. Newly saved links will now be automatically categorized by Gemini in the background!
